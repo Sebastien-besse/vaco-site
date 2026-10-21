@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nouveau mot de passe VACO</title>
+  <meta name="description" content="Choisis un nouveau mot de passe pour ton compte VACO.">
+  <meta name="theme-color" content="#6CC4FF">
+  <link rel="icon" href="assets/img/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="ciel-bleu">
+  <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+  <div class="ciel">
+    <header class="conteneur entete">
+      <a class="marque" href="./" aria-label="VACO, accueil">
+        <img src="assets/img/icone.webp" alt="" width="44" height="44">
+        <span>VACO</span>
+      </a>
+    </header>
+    <div class="conteneur titre-page">
+      <h1 id="titre">Nouveau mot de passe</h1>
+      <p id="sous-titre">Choisis-en un nouveau, puis reconnecte-toi dans l'app.</p>
+    </div>
+  </div>
+
+  <main id="contenu" class="bloc" style="padding-top:40px">
+    <div class="conteneur texte">
+      <form class="verre formulaire" id="formulaire" novalidate>
+        <label for="mdp">Nouveau mot de passe</label>
+        <input id="mdp" type="password" autocomplete="new-password" minlength="8" required aria-describedby="aide-mdp">
+        <p class="aide" id="aide-mdp">8 caractères minimum.</p>
+        <label for="mdp2">Confirme-le</label>
+        <input id="mdp2" type="password" autocomplete="new-password" minlength="8" required>
+        <p class="message" id="message" role="alert"></p>
+        <button class="bouton" type="submit" id="valider">Enregistrer</button>
+      </form>
+
+      <article class="verre" id="ok" hidden>
+        <h2>C'est enregistré !</h2>
+        <ul>
+          <li>Retourne dans l'app VACO sur ton iPhone.</li>
+          <li>Connecte-toi avec ton adresse e-mail et ton nouveau mot de passe.</li>
+        </ul>
+      </article>
+
+      <article class="verre" id="erreur" hidden>
+        <h2>Que faire ?</h2>
+        <ul>
+          <li>Dans l'app, touche « Mot de passe oublié ? » pour recevoir un nouveau lien. Il est valable une heure et ne sert qu'une fois.</li>
+          <li>Toujours bloquée ? Écris-nous à <a href="mailto:vaco.app.support@gmail.com?subject=Mot%20de%20passe%20oubli%C3%A9">vaco.app.support@gmail.com</a>.</li>
+        </ul>
+      </article>
+    </div>
+  </main>
+
+  <script>
+    // Lien de l'e-mail « Mot de passe oublié » : ?token_hash=…&type=recovery (modèle d'e-mail Supabase).
+    // Clé publishable : publique par nature, la sécurité repose sur le jeton du lien.
+    (function () {
+      var SUPABASE = 'https://ukgfukbesmcnhuvzqjoq.supabase.co/auth/v1';
+      var CLE = 'sb_publishable_RCWSur8tVmeusQgzzagJuQ_GRy7Vyms';
+      var params = new URLSearchParams(location.search.slice(1) || location.hash.slice(1));
+      var jeton = params.get('token_hash');
+      var acces = null;
+      if (location.search || location.hash) history.replaceState(null, '', location.pathname);
+
+      var $ = function (id) { return document.getElementById(id); };
+      function lienMort(texte) {
+        $('titre').textContent = 'Ce lien ne marche plus';
+        $('sous-titre').textContent = texte;
+        $('formulaire').hidden = true;
+        $('erreur').hidden = false;
+      }
+      if (!jeton || params.get('error') || params.get('error_code')) {
+        lienMort('Il a expiré, a déjà servi ou est incomplet.');
+        return;
+      }
+
+      function appel(chemin, methode, corps, jetonAcces) {
+        var entetes = { 'apikey': CLE, 'Content-Type': 'application/json' };
+        if (jetonAcces) entetes['Authorization'] = 'Bearer ' + jetonAcces;
+        return fetch(SUPABASE + chemin, { method: methode, headers: entetes, body: JSON.stringify(corps) })
+          .then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, donnees: d }; });
+          });
+      }
+
+      $('formulaire').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var mdp = $('mdp').value, mdp2 = $('mdp2').value;
+        if (mdp.length < 8) { $('message').textContent = 'Ton mot de passe doit faire au moins 8 caractères.'; return; }
+        if (mdp !== mdp2) { $('message').textContent = 'Les deux mots de passe ne sont pas identiques.'; return; }
+        $('message').textContent = '';
+        $('valider').disabled = true;
+
+        // Le jeton du lien ne sert qu'une fois : on garde l'accès obtenu pour pouvoir réessayer.
+        var verification = acces ? Promise.resolve(acces) : appel('/verify', 'POST', { type: 'recovery', token_hash: jeton })
+          .then(function (r) {
+            if (!r.ok || !r.donnees.access_token) throw 'lien';
+            acces = r.donnees.access_token;
+            return acces;
+          });
+
+        verification
+          .then(function (a) { return appel('/user', 'PUT', { password: mdp }, a); })
+          .then(function (r) {
+            if (!r.ok) throw (r.donnees.error_code || r.donnees.code || 'inconnue');
+            appel('/logout', 'POST', {}, acces);
+            $('titre').textContent = 'Mot de passe changé !';
+            $('sous-titre').textContent = 'Tu peux te reconnecter dans l\'app.';
+            $('formulaire').hidden = true;
+            $('ok').hidden = false;
+          })
+          .catch(function (code) {
+            $('valider').disabled = false;
+            if (code === 'lien') { lienMort('Il a expiré ou a déjà servi.'); return; }
+            $('message').textContent = code === 'same_password'
+              ? 'Choisis un mot de passe différent de l\'ancien.'
+              : code === 'weak_password'
+                ? 'Ce mot de passe est trop faible, essaie-en un plus long.'
+                : 'Ça n\'a pas marché. Vérifie ta connexion et réessaie.';
+          });
+      });
+    })();
+  </script>
+
+  <footer class="pied">
+    <div class="conteneur">
+      <span>© 2026 VACO · Fait avec soin en France</span>
+      <nav aria-label="Liens utiles">
+        <a href="aide.html">Aide</a>
+        <a href="confidentialite.html">Confidentialité</a>
+        <a href="conditions.html">Conditions</a>
+        <a href="accessibilite.html">Accessibilité</a>
+        <a href="mentions-legales.html">Mentions légales</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

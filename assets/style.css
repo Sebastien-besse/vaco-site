@@ -338,3 +338,18 @@ section.bloc > .conteneur > h2 { margin-bottom: 12px; }
   .nav a { padding: 7px 12px; font-size: 14px; }
   section.bloc { padding: 52px 0; }
 }
+
+/* ---------- Formulaire (nouveau mot de passe) ---------- */
+
+.formulaire { padding: 26px; display: grid; gap: 8px; }
+.formulaire label { font-weight: 900; margin-top: 6px; }
+.formulaire input {
+  font: inherit; font-weight: 800; color: var(--ink);
+  min-height: 52px; padding: 0 16px; border-radius: var(--radius-m);
+  border: 1.5px solid var(--line); background: #fff;
+}
+.formulaire input:focus { outline: 3px solid var(--accent-light); outline-offset: 1px; border-color: var(--accent); }
+.formulaire .aide { font-size: 14px; color: var(--ink-muted); }
+.formulaire .message { color: #C8323A; font-weight: 900; min-height: 1.5em; }
+.formulaire .bouton { border: none; cursor: pointer; margin-top: 6px; }
+.formulaire .bouton:disabled { opacity: 0.6; cursor: default; }
