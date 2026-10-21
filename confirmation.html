@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adresse confirmée VACO</title>
+  <meta name="description" content="Confirmation de ton adresse e-mail VACO.">
+  <meta name="theme-color" content="#6CC4FF">
+  <link rel="icon" href="assets/img/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="ciel-bleu">
+  <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+  <div class="ciel">
+    <header class="conteneur entete">
+      <a class="marque" href="./" aria-label="VACO, accueil">
+        <img src="assets/img/icone.webp" alt="" width="44" height="44">
+        <span>VACO</span>
+      </a>
+    </header>
+    <div class="conteneur titre-page">
+      <h1 id="titre">Adresse confirmée !</h1>
+      <p id="sous-titre">Ton compte VACO est prêt.</p>
+    </div>
+  </div>
+
+  <main id="contenu" class="bloc" style="padding-top:40px">
+    <div class="conteneur texte">
+      <article class="verre" id="ok">
+        <h2>Et maintenant ?</h2>
+        <ul>
+          <li>Retourne dans l'app VACO sur ton iPhone.</li>
+          <li>Connecte-toi avec ton adresse e-mail et ton mot de passe.</li>
+          <li>Krôa t'attend pour ta première séance.</li>
+        </ul>
+      </article>
+      <article class="verre" id="erreur" hidden>
+        <h2>Que faire ?</h2>
+        <ul>
+          <li>Retourne dans l'app et essaie de te connecter : si ton adresse a déjà été confirmée, ça marchera.</li>
+          <li>Sinon, refais l'inscription avec la même adresse : tu recevras un nouveau lien, valable 24 heures.</li>
+          <li>Toujours bloquée ? Écris-nous à <a href="mailto:vaco.app.support@gmail.com?subject=Confirmation%20de%20mon%20adresse">vaco.app.support@gmail.com</a>.</li>
+        </ul>
+      </article>
+    </div>
+  </main>
+
+  <script>
+    // Supabase renvoie ici après le clic : jetons ou erreur dans le fragment (#…).
+    // La page n'en a pas besoin : on les efface de la barre d'adresse et de l'historique.
+    (function () {
+      var params = new URLSearchParams(location.hash.slice(1) || location.search.slice(1));
+      if (params.get('error') || params.get('error_code')) {
+        document.getElementById('titre').textContent = 'Ce lien ne marche plus';
+        document.getElementById('sous-titre').textContent = params.get('error_code') === 'otp_expired'
+          ? 'Il a expiré ou a déjà servi.' : 'Ton adresse n\'a pas pu être confirmée avec ce lien.';
+        document.getElementById('ok').hidden = true;
+        document.getElementById('erreur').hidden = false;
+      }
+      if (location.hash || location.search) history.replaceState(null, '', location.pathname);
+    })();
+  </script>
+
+  <footer class="pied">
+    <div class="conteneur">
+      <span>© 2026 VACO · Fait avec soin en France</span>
+      <nav aria-label="Liens utiles">
+        <a href="aide.html">Aide</a>
+        <a href="confidentialite.html">Confidentialité</a>
+        <a href="conditions.html">Conditions</a>
+        <a href="accessibilite.html">Accessibilité</a>
+        <a href="mentions-legales.html">Mentions légales</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
